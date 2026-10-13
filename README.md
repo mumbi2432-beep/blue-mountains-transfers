@@ -26,3 +26,8 @@ Admin: `/admin/` (any username, the `ADMIN_PASSWORD` as password).
 
 ## Importing providers
 `node scripts/import-providers.mjs providers.csv > import.sql` then run it with `wrangler d1 execute` (see script header).
+
+## Other tools
+- `scripts/rank-areas.mjs`: rank suburbs from an ABS Census export (see `docs/CENSUS_PRIORITY.md`).
+- `docs/OUTREACH.md`: how to sign the first providers.
+- Monthly provider reports: `/admin/` (see `docs/SETUP.md` step 9).

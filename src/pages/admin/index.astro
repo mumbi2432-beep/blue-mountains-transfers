@@ -2,6 +2,7 @@
 import Layout from "../../layouts/Layout.astro";
 import { categoryBySlug } from "../../data/categories";
 import { getEnv } from "../../lib/env";
+import { providerStats } from "../../lib/reports";
 
 const db = getEnv(Astro.locals).DB;
 const num = async (sql: string) => (await db.prepare(sql).first<{ n: number }>())?.n ?? 0;
@@ -12,6 +13,8 @@ const [providers, claimed, paid, leads30, clicks30] = await Promise.all([
 	num(`SELECT COUNT(*) n FROM leads WHERE created_at > datetime('now','-30 days')`),
 	num(`SELECT COUNT(*) n FROM click_events WHERE created_at > datetime('now','-30 days')`),
 ]);
+const stats = await providerStats(db, 30);
+const q = Astro.url.searchParams;
 const { results: claims } = await db.prepare(`SELECT * FROM claim_requests WHERE status='pending' ORDER BY id DESC`).all<any>();
 const { results: leads } = await db
 	.prepare(`SELECT l.*, p.name pname, p.business_name pbiz FROM leads l JOIN providers p ON p.id = l.provider_id ORDER BY l.id DESC LIMIT 25`)
@@ -42,6 +45,20 @@ const { results: provs } = await db.prepare(`SELECT id, name, business_name, cat
 				</form>
 			</div>
 		)) : <p class="muted">None.</p>}
+
+		<h2 id="reports">Monthly provider reports (last 30 days)</h2>
+		{q.has("sent") ? (
+			<div class={q.get("configured") === "1" ? "alert" : "alert err"}>
+				{q.get("configured") === "1" ? `Sent ${q.get("sent")}, skipped ${q.get("skipped")}, failed ${q.get("failed")}.` : "Email is not configured (RESEND_API_KEY secret missing). Nothing was sent."}
+			</div>
+		) : null}
+		<table class="t">
+			<thead><tr><th>Provider</th><th>Plan</th><th>Views</th><th>Leads</th><th>Calls</th><th>WhatsApp</th><th>Web</th><th>Email on file</th><th>Sent this month</th></tr></thead>
+			<tbody>
+				{stats.map((s) => <tr><td>{s.label}</td><td>{s.plan}</td><td>{s.views}</td><td>{s.leads}</td><td>{s.calls}</td><td>{s.whatsapp}</td><td>{s.websites}</td><td>{s.email ? "yes" : "NO"}</td><td>{s.already_sent ? "yes" : "no"}</td></tr>)}
+			</tbody>
+		</table>
+		<form method="post" action="/api/admin/send-reports/" style="margin-top:12px"><button class="btn primary small" type="submit">Send this month's reports</button> <span class="muted">Sends once per provider per month.</span></form>
 
 		<h2>Latest leads</h2>
 		<table class="t">

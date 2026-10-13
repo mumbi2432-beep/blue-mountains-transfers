@@ -46,3 +46,11 @@ The sitemap only lists pages that pass the quality rule, so it will be small at 
 ## 8. Load providers and launch areas
 - Providers: `node scripts/import-providers.mjs` (CSV → SQL), or add one by one in `/admin/`.
 - Areas: edit `launch` flags in `src/data/areas.ts` (see `docs/CENSUS_PRIORITY.md`).
+
+## 9. Monthly results reports
+Providers who claim a profile get a monthly email (views, enquiries, call/WhatsApp taps). Send them from `/admin/`
+(button under "Monthly provider reports"). To automate, use any free cron service (e.g. cron-job.org) to call, once a month:
+```
+curl -u admin:YOUR_ADMIN_PASSWORD -X POST -H "Content-Type: application/json" -d '{}' https://nepalipropertymarket.com.au/api/admin/send-reports/
+```
+Each provider is sent at most once per month. Needs the `RESEND_API_KEY` secret.
