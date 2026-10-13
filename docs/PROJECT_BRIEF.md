@@ -27,11 +27,12 @@ Providers pay monthly to rank at the top of local pages, e.g. "Nepalese real est
 ## Cold start
 Unclaimed profiles from public data -> providers claim and upgrade. Founder sells the first 10-20 by hand.
 
-## Stack (updated: shared hosting)
-- Custom PHP + MySQL (Laravel) on existing Synergy shared hosting. Cloudflare free plan in front (DNS/cache).
+## Stack (final)
+- Astro on Cloudflare Workers (free tier) + Cloudflare D1 database. Hosting cost ~$0 to start.
+- Domain stays registered at Synergy; DNS pointed to Cloudflare. Synergy hosting not used.
+- Transactional email (lead notifications) via an email API (e.g. Resend, free tier).
 - Payments: Stripe for subscriptions when ready (Square exists; Stripe preferred for recurring billing).
 - Houzez not used.
-- Pending: confirm PHP/MySQL versions from cPanel.
 
 ## Quality rule
 Every indexed page needs unique local content; pages failing a minimum-content check stay noindex.
@@ -45,4 +46,4 @@ Every indexed page needs unique local content; pages failing a minimum-content c
 6. Launch: sitemap, Search Console, schema markup.
 
 ## Founder to-dos
-Cloudflare + Synergy DNS access, ABN for Stripe, hands-on selling, cPanel screenshot.
+Cloudflare + Synergy DNS access, ABN for Stripe, hands-on selling.
