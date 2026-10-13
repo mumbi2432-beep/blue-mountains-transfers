@@ -1,21 +1,8 @@
 {
-	"name": "blue-mountains-transfers",
-	"description": "Build a personal website, blog, or portfolio with Astro.",
-	"cloudflare": {
-		"label": "Astro Framework Starter",
-		"products": [
-			"Workers"
-		],
-		"categories": [],
-		"preview_icon_url": "https://imagedelivery.net/wSMYJvS3Xw-n339CbDyDIA/394ca3c9-d351-4036-035a-9f6dfa26dd00/public",
-		"preview_image_url": "https://imagedelivery.net/wSMYJvS3Xw-n339CbDyDIA/f40a6577-eed5-4f3e-cef4-b5ef0a1be100/preview",
-		"publish": true
-	},
+	"name": "nepali-property-market",
+	"description": "Programmatic-SEO directory of Nepali-speaking property professionals in Australia.",
 	"dependencies": {
 		"@astrojs/cloudflare": "12.6.12",
-		"@astrojs/mdx": "4.3.12",
-		"@astrojs/rss": "4.0.14",
-		"@astrojs/sitemap": "3.6.0",
 		"astro": "5.16.2",
 		"typescript": "5.9.3"
 	},
@@ -30,7 +17,11 @@
 		"check": "astro build && tsc && wrangler deploy --dry-run",
 		"deploy": "wrangler deploy",
 		"dev": "astro dev",
-		"preview": "astro build && wrangler dev"
+		"preview": "astro build && wrangler dev",
+		"db:migrate:local": "wrangler d1 migrations apply nepali-property-market --local",
+		"db:migrate:remote": "wrangler d1 migrations apply nepali-property-market --remote",
+		"db:seed-demo:local": "wrangler d1 execute nepali-property-market --local --file=db/seed-demo.sql",
+		"typecheck": "astro check || tsc --noEmit"
 	},
 	"type": "module"
 }

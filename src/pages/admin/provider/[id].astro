@@ -1,0 +1,85 @@
+---
+import Layout from "../../../layouts/Layout.astro";
+import { CATEGORIES } from "../../../data/categories";
+import { AREAS } from "../../../data/areas";
+import { areaSlugsForProvider } from "../../../lib/db";
+import { getEnv } from "../../../lib/env";
+
+const db = getEnv(Astro.locals).DB;
+const idParam = Astro.params.id ?? "new";
+let p: any = {};
+let attached: { area_slug: string; is_top: number }[] = [];
+if (idParam !== "new") {
+	p = await db.prepare(`SELECT * FROM providers WHERE id = ?`).bind(Number(idParam)).first();
+	if (!p) return Astro.rewrite("/404");
+	attached = await areaSlugsForProvider(db, p.id);
+}
+const has = (s: string) => attached.some((a) => a.area_slug === s);
+const isTop = (s: string) => attached.some((a) => a.area_slug === s && a.is_top);
+const cities = [...new Set(AREAS.map((a) => a.city))];
+const saved = Astro.url.searchParams.get("saved");
+const v = (k: string) => p[k] ?? "";
+---
+<Layout title={idParam === "new" ? "Add provider" : `Edit ${v("name")}`} description="Admin" noindex={true}>
+	<div class="wrap narrow section">
+		<p><a href="/admin/">← Admin</a></p>
+		<h1>{idParam === "new" ? "Add provider" : `Edit: ${v("business_name") || v("name")}`}</h1>
+		{saved ? <div class="alert">Saved.</div> : null}
+		{p.slug ? <p><a href={`/provider/${p.slug}/`} target="_blank">View public profile</a></p> : null}
+		<form class="f" method="post" action="/api/admin/provider/">
+			<input type="hidden" name="id" value={idParam} />
+			<div class="row">
+				<label>Contact / person name <input name="name" required value={v("name")} /></label>
+				<label>Business name <input name="business_name" value={v("business_name")} /></label>
+			</div>
+			<div class="row">
+				<label>Category
+					<select name="category">{CATEGORIES.map((c) => <option value={c.slug} selected={c.slug === p.category}>{c.name}</option>)}</select>
+				</label>
+				<label>Status
+					<select name="status">{["unclaimed", "claimed", "suspended"].map((s) => <option selected={s === (p.status ?? "unclaimed")}>{s}</option>)}</select>
+				</label>
+			</div>
+			<div class="row">
+				<label>Plan
+					<select name="plan">{["free", "founding", "standard"].map((s) => <option selected={s === (p.plan ?? "free")}>{s}</option>)}</select>
+				</label>
+				<label>Plan expires (YYYY-MM-DD, blank = no expiry) <input name="plan_expires_at" value={v("plan_expires_at")} /></label>
+			</div>
+			<label>Description (unique, useful text; min 60 chars for indexing) <textarea name="description" rows="5">{v("description")}</textarea></label>
+			<div class="row">
+				<label>Phone <input name="phone" value={v("phone")} /></label>
+				<label>WhatsApp (if different) <input name="whatsapp" value={v("whatsapp")} /></label>
+			</div>
+			<div class="row">
+				<label>Lead email (never shown publicly) <input name="email" type="email" value={v("email")} /></label>
+				<label>Website <input name="website" value={v("website")} /></label>
+			</div>
+			<div class="row">
+				<label>Office suburb <input name="address_suburb" value={v("address_suburb")} /></label>
+				<label>State <input name="address_state" maxlength="3" value={v("address_state")} /></label>
+			</div>
+			<div class="row">
+				<label>Licence number <input name="licence_no" value={v("licence_no")} /></label>
+				<label>ABN <input name="abn" value={v("abn")} /></label>
+			</div>
+			<label>Data source / audit note <input name="source" value={v("source")} placeholder="e.g. NSW Fair Trading register, 2026-10-13" /></label>
+			<label class="check"><input type="checkbox" name="nepali_speaking" checked={!!p.nepali_speaking} /> <span>Nepali-speaking (tick ONLY when confirmed by them or their own materials)</span></label>
+			<label class="check"><input type="checkbox" name="licence_verified" checked={!!p.licence_verified} /> <span>Licence checked on the official register</span></label>
+
+			<h3>Areas served (tick) and exclusive top slot (Top)</h3>
+			{cities.map((city) => (
+				<div>
+					<b>{city}</b>
+					<div style="display:grid;gap:4px;margin:6px 0 14px">
+						<label class="check"><input type="checkbox" name="areas" value={`city:${city.toLowerCase()}`} checked={has(`city:${city.toLowerCase()}`)} /> <span>Whole city</span> <label class="check" style="margin-left:auto"><input type="checkbox" name="top" value={`city:${city.toLowerCase()}`} checked={isTop(`city:${city.toLowerCase()}`)} /> Top</label></label>
+						{AREAS.filter((a) => a.city === city).map((a) => (
+							<label class="check"><input type="checkbox" name="areas" value={a.slug} checked={has(a.slug)} /> <span>{a.name}{a.type === "lga" ? " (council)" : ""}{a.launch ? "" : " – not launched"}</span> <label class="check" style="margin-left:auto"><input type="checkbox" name="top" value={a.slug} checked={isTop(a.slug)} /> Top</label></label>
+						))}
+					</div>
+				</div>
+			))}
+			<button class="btn primary" type="submit">Save</button>
+		</form>
+	</div>
+</Layout>

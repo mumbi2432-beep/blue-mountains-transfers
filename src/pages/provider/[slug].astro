@@ -1,0 +1,88 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Breadcrumbs from "../../components/Breadcrumbs.astro";
+import LeadForm from "../../components/LeadForm.astro";
+import { categoryBySlug } from "../../data/categories";
+import { areaBySlug } from "../../data/areas";
+import { areaSlugsForProvider, providerBySlug, recordView } from "../../lib/db";
+import { getEnv } from "../../lib/env";
+import { breadcrumbLd, providerLd } from "../../lib/seo";
+import { digits, url, waLink } from "../../lib/site";
+
+const db = getEnv(Astro.locals).DB;
+const p = await providerBySlug(db, Astro.params.slug ?? "");
+if (!p) return Astro.rewrite("/404");
+const cat = categoryBySlug(p.category);
+if (!cat) return Astro.rewrite("/404");
+
+const attached = await areaSlugsForProvider(db, p.id);
+const areas = attached.map((a) => areaBySlug(a.area_slug)).filter((a): a is NonNullable<typeof a> => !!a && a.launch);
+const display = p.business_name || p.name;
+const wa = waLink(p.whatsapp || p.phone);
+const sponsored = !!p.is_paid;
+// Quality rule: unclaimed profiles built from public data stay out of the index until claimed.
+const indexable = p.status === "claimed" && (p.description?.length ?? 0) >= 60;
+
+const ua = Astro.request.headers.get("user-agent") ?? "";
+if (!/bot|crawl|spider|slurp|preview/i.test(ua)) {
+	Astro.locals.runtime.ctx.waitUntil(recordView(db, p.id).catch(() => {}));
+}
+const crumbs = [{ name: "Home", path: "/" }, { name: cat.plural, path: url(cat.slug) }, { name: display }];
+---
+<Layout
+	title={`${display} - ${cat.name}${p.address_suburb ? ` in ${p.address_suburb}` : ""}`}
+	description={`${display}${p.nepali_speaking ? " is a Nepali-speaking" : " is a"} ${cat.name.toLowerCase()}${p.address_suburb ? ` in ${p.address_suburb}, ${p.address_state ?? ""}` : ""}. ${p.description ? p.description.slice(0, 110) : "Contact them directly through Nepali Property Market."}`}
+	noindex={!indexable}
+	jsonLd={[breadcrumbLd([{ name: "Home", path: "/" }, { name: cat.plural, path: url(cat.slug) }, { name: display, path: `/provider/${p.slug}/` }]), providerLd(p, areas)]}
+>
+	<div class="wrap">
+		<Breadcrumbs items={crumbs} />
+		<div class="page-head">
+			<div class="badges" style="margin-bottom:10px">
+				{sponsored ? <span class="badge sp">Sponsored</span> : null}
+				{p.nepali_speaking ? <span class="badge np">Nepali-speaking</span> : null}
+				{p.licence_verified ? <span class="badge ok">Licence checked</span> : null}
+				<span class="badge">{cat.name}</span>
+			</div>
+			<h1>{display}</h1>
+			{p.business_name && p.business_name !== p.name ? <p class="muted" style="margin:0">{p.name}</p> : null}
+			{p.address_suburb ? <p class="muted">{p.address_suburb}{p.address_state ? `, ${p.address_state}` : ""}</p> : null}
+		</div>
+
+		<div class="two-col">
+			<div>
+				{p.description ? <div class="prose"><h2 style="margin-top:0">About</h2><p>{p.description}</p></div> : null}
+
+				<div class="btn-row">
+					{p.phone ? <a class="btn" href={`tel:${digits(p.phone)}`} data-track="call" data-provider={p.slug}>Call {p.phone}</a> : null}
+					{wa ? <a class="btn wa" href={wa} target="_blank" rel="noopener" data-track="whatsapp" data-provider={p.slug}>WhatsApp</a> : null}
+					{p.website ? <a class="btn" href={p.website} target="_blank" rel={sponsored ? "sponsored nofollow noopener" : "nofollow noopener"} data-track="website" data-provider={p.slug}>Website</a> : null}
+				</div>
+
+				<div class="prose">
+					<h2>Details</h2>
+					<table class="t">
+						<tbody>
+							{p.licence_no ? <tr><th>Licence</th><td>{p.licence_no}{p.licence_verified ? " (checked by us)" : " (supplied by the business; please verify)"}</td></tr> : null}
+							<tr><th>Languages</th><td>{p.nepali_speaking ? "English, Nepali" : "English"}</td></tr>
+							{areas.length ? <tr><th>Areas served</th><td>{areas.map((a, i) => <><a href={url(cat.slug, a.slug)}>{a.name}</a>{i < areas.length - 1 ? ", " : ""}</>)}</td></tr> : null}
+						</tbody>
+					</table>
+					<p class="notice">Check credentials on {cat.registerName}: <a href={cat.registerUrl} rel="nofollow noopener" target="_blank">official register</a>.</p>
+				</div>
+
+				{p.status === "unclaimed" ? (
+					<div class="card" style="margin-top:20px">
+						<h3>Is this your business?</h3>
+						<p>This profile was created from public information. Claim it to add your photo and details, show a Nepali-speaking badge and receive enquiries directly.</p>
+						<a class="btn primary small" style="margin-top:12px" href={`/claim/${p.slug}/`}>Claim this profile</a>
+					</div>
+				) : null}
+			</div>
+
+			<aside class="sticky">
+				<div class="card"><LeadForm providerSlug={p.slug} providerName={display} area={areas[0]?.slug ?? ""} /></div>
+			</aside>
+		</div>
+	</div>
+</Layout>

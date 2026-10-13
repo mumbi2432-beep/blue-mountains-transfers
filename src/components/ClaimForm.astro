@@ -1,0 +1,28 @@
+---
+import { CATEGORIES } from "../data/categories";
+interface Props { providerSlug?: string; businessName?: string; category?: string }
+const { providerSlug = "", businessName = "", category = "" } = Astro.props;
+---
+<form class="f" method="post" action="/api/claim/" id="apply">
+	<input type="hidden" name="provider" value={providerSlug} />
+	<div class="hp" aria-hidden="true"><label>Leave blank <input type="text" name="website_url" tabindex="-1" autocomplete="off" /></label></div>
+	<label>Business name <input name="business_name" required maxlength="150" value={businessName} /></label>
+	<div class="row">
+		<label>Your name <input name="contact_name" required maxlength="100" autocomplete="name" /></label>
+		<label>Category
+			<select name="category" required>
+				{CATEGORIES.map((c) => <option value={c.slug} selected={c.slug === category}>{c.name}</option>)}
+			</select>
+		</label>
+	</div>
+	<div class="row">
+		<label>Mobile <input name="phone" type="tel" required maxlength="30" autocomplete="tel" /></label>
+		<label>Email <input name="email" type="email" required maxlength="120" autocomplete="email" /></label>
+	</div>
+	<label>Suburbs or council areas you serve <textarea name="areas" rows="2" maxlength="500" placeholder="e.g. Schofields, Rouse Hill, Blacktown"></textarea></label>
+	<label>Licence or registration number (if applicable) <input name="licence_no" maxlength="60" /></label>
+	<label class="check"><input type="checkbox" name="speaks_nepali" value="1" /> <span>I or my team can assist clients in Nepali</span></label>
+	<label>Anything else? <textarea name="notes" rows="3" maxlength="1000"></textarea></label>
+	<label class="check"><input type="checkbox" name="consent" value="1" required /> <span>I confirm I am authorised to represent this business and agree to the <a href="/terms/">terms</a> and <a href="/privacy/">privacy policy</a>.</span></label>
+	<button class="btn primary" type="submit">Submit request</button>
+</form>

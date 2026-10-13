@@ -1,0 +1,17 @@
+---
+import Layout from "../layouts/Layout.astro";
+const t = Astro.url.searchParams.get("t") ?? "";
+const msg =
+	t === "claim"
+		? { h: "Thanks, we have your request", p: "We will review it and contact you within a couple of business days to verify your details and set up your listing." }
+		: t === "limit"
+			? { h: "Too many requests", p: "Please wait a little while and try again, or contact the business directly by phone." }
+			: { h: "Enquiry sent", p: "The business has been notified and should contact you soon. For a faster reply you can also call or message them directly." };
+---
+<Layout title={msg.h} description={msg.p} noindex={true}>
+	<div class="wrap narrow section" style="padding-top:56px">
+		<h1>{msg.h}</h1>
+		<p>{msg.p}</p>
+		<a class="btn primary" href="/">Back to home</a>
+	</div>
+</Layout>

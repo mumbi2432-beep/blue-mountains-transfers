@@ -1,0 +1,70 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { categoryBySlug } from "../../data/categories";
+import { getEnv } from "../../lib/env";
+
+const db = getEnv(Astro.locals).DB;
+const num = async (sql: string) => (await db.prepare(sql).first<{ n: number }>())?.n ?? 0;
+const [providers, claimed, paid, leads30, clicks30] = await Promise.all([
+	num(`SELECT COUNT(*) n FROM providers WHERE is_demo = 0`),
+	num(`SELECT COUNT(*) n FROM providers WHERE status='claimed' AND is_demo = 0`),
+	num(`SELECT COUNT(*) n FROM providers WHERE plan != 'free' AND is_demo = 0`),
+	num(`SELECT COUNT(*) n FROM leads WHERE created_at > datetime('now','-30 days')`),
+	num(`SELECT COUNT(*) n FROM click_events WHERE created_at > datetime('now','-30 days')`),
+]);
+const { results: claims } = await db.prepare(`SELECT * FROM claim_requests WHERE status='pending' ORDER BY id DESC`).all<any>();
+const { results: leads } = await db
+	.prepare(`SELECT l.*, p.name pname, p.business_name pbiz FROM leads l JOIN providers p ON p.id = l.provider_id ORDER BY l.id DESC LIMIT 25`)
+	.all<any>();
+const { results: provs } = await db.prepare(`SELECT id, name, business_name, category, status, plan, nepali_speaking, licence_verified, is_demo FROM providers ORDER BY id DESC LIMIT 200`).all<any>();
+---
+<Layout title="Admin" description="Admin" noindex={true}>
+	<div class="wrap section">
+		<h1>Admin</h1>
+		<div class="grid cols-4">
+			<div class="card"><h3>{providers}</h3><p>Providers</p></div>
+			<div class="card"><h3>{claimed}</h3><p>Claimed</p></div>
+			<div class="card"><h3>{paid}</h3><p>Paying</p></div>
+			<div class="card"><h3>{leads30}</h3><p>Leads (30d)</p></div>
+			<div class="card"><h3>{clicks30}</h3><p>Call/WA/web clicks (30d)</p></div>
+		</div>
+
+		<h2>Pending claim and listing requests ({claims?.length ?? 0})</h2>
+		{claims?.length ? claims.map((c) => (
+			<div class="card" style="margin-bottom:12px">
+				<b>{c.business_name}</b> · {c.contact_name} · {c.phone} · {c.email}<br />
+				<span class="muted">{c.category} · areas: {c.areas || "n/a"} · licence: {c.licence_no || "n/a"} · says speaks Nepali: {c.speaks_nepali ? "yes (unverified)" : "no"} · {c.provider_id ? `claim of provider #${c.provider_id}` : "new listing"}</span>
+				{c.notes ? <p>{c.notes}</p> : null}
+				<form method="post" action="/api/admin/claim/" style="display:flex;gap:8px;margin-top:8px">
+					<input type="hidden" name="id" value={c.id} />
+					<button class="btn small primary" name="action" value="approve">Approve</button>
+					<button class="btn small" name="action" value="reject">Reject</button>
+				</form>
+			</div>
+		)) : <p class="muted">None.</p>}
+
+		<h2>Latest leads</h2>
+		<table class="t">
+			<thead><tr><th>When</th><th>Provider</th><th>From</th><th>Contact</th><th>Emailed</th><th>Message</th></tr></thead>
+			<tbody>
+				{leads?.map((l) => (
+					<tr><td>{l.created_at}</td><td>{l.pbiz || l.pname}</td><td>{l.name}</td><td>{l.phone} {l.email}</td><td>{l.emailed ? "yes" : "NO"}</td><td>{(l.message || "").slice(0, 120)}</td></tr>
+				))}
+			</tbody>
+		</table>
+
+		<h2>Providers <a class="btn small primary" href="/admin/provider/new/">Add provider</a></h2>
+		<table class="t">
+			<thead><tr><th>#</th><th>Name</th><th>Category</th><th>Status</th><th>Plan</th><th>Badges</th><th></th></tr></thead>
+			<tbody>
+				{provs?.map((p) => (
+					<tr>
+						<td>{p.id}</td><td>{p.business_name || p.name}{p.is_demo ? " (demo)" : ""}</td><td>{categoryBySlug(p.category)?.name}</td>
+						<td>{p.status}</td><td>{p.plan}</td><td>{p.nepali_speaking ? "NP " : ""}{p.licence_verified ? "LIC" : ""}</td>
+						<td><a href={`/admin/provider/${p.id}/`}>Edit</a></td>
+					</tr>
+				))}
+			</tbody>
+		</table>
+	</div>
+</Layout>

@@ -1,0 +1,30 @@
+---
+import type { Provider } from "../lib/db";
+import { waLink, digits } from "../lib/site";
+
+interface Props { p: Provider; area?: string; showTopLabel?: boolean }
+const { p, area = "" } = Astro.props;
+const wa = waLink(p.whatsapp || p.phone);
+const sponsored = !!p.is_paid || !!p.is_top;
+const display = p.business_name || p.name;
+---
+<article class:list={["provider", { top: !!p.is_top }]}>
+	<div>
+		<div class="badges" style="margin-bottom:8px">
+			{p.is_top ? <span class="badge sp">Sponsored · Top pick</span> : sponsored ? <span class="badge sp">Sponsored</span> : null}
+			{p.nepali_speaking ? <span class="badge np">Nepali-speaking</span> : null}
+			{p.licence_verified ? <span class="badge ok">Licence checked</span> : null}
+			{p.status === "unclaimed" ? <span class="badge">Unclaimed profile</span> : null}
+		</div>
+		<h3><a href={`/provider/${p.slug}/`}>{display}</a></h3>
+		{p.business_name && p.business_name !== p.name ? <div class="meta">{p.name}</div> : null}
+		{p.address_suburb ? <div class="meta">{p.address_suburb}{p.address_state ? `, ${p.address_state}` : ""}</div> : null}
+	</div>
+	{p.description ? <p style="margin:0">{p.description.length > 220 ? p.description.slice(0, 217) + "…" : p.description}</p> : null}
+	<div class="btn-row" style="margin-top:0">
+		{p.phone ? <a class="btn small" href={`tel:${digits(p.phone)}`} data-track="call" data-provider={p.slug} data-area={area}>Call</a> : null}
+		{wa ? <a class="btn small wa" href={wa} target="_blank" rel="noopener" data-track="whatsapp" data-provider={p.slug} data-area={area}>WhatsApp</a> : null}
+		<a class="btn small primary" href={`/provider/${p.slug}/#enquire`}>Send enquiry</a>
+	</div>
+	{p.status === "unclaimed" ? <div class="meta"><a href={`/claim/${p.slug}/`}>Is this your business? Claim this profile</a></div> : null}
+</article>

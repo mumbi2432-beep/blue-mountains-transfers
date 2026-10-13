@@ -1,0 +1,51 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Breadcrumbs from "../../components/Breadcrumbs.astro";
+import { CATEGORIES } from "../../data/categories";
+import { areaBySlug, STATE_NAMES } from "../../data/areas";
+import { realProviderCount } from "../../lib/db";
+import { getEnv } from "../../lib/env";
+import { breadcrumbLd } from "../../lib/seo";
+import { url } from "../../lib/site";
+
+const area = areaBySlug(Astro.params.area ?? "");
+if (!area || !area.launch) return Astro.rewrite("/404");
+
+const db = getEnv(Astro.locals).DB;
+const counts = await Promise.all(CATEGORIES.map((c) => realProviderCount(db, c.slug, area)));
+const total = counts.reduce((a, b) => a + b, 0);
+const lga = area.lga ? areaBySlug(area.lga) : undefined;
+const nearby = area.nearby.map((s) => areaBySlug(s)).filter((a) => a && a.launch);
+---
+<Layout
+	title={`Nepali-speaking property professionals in ${area.name}, ${area.state}`}
+	description={`Find Nepali-speaking real estate agents, mortgage brokers, conveyancers, accountants and inspectors in ${area.name}, ${STATE_NAMES[area.state]}.`}
+	noindex={total === 0}
+	jsonLd={[breadcrumbLd([{ name: "Home", path: "/" }, { name: area.name, path: url("areas", area.slug) }])]}
+>
+	<div class="wrap">
+		<Breadcrumbs items={[{ name: "Home", path: "/" }, { name: area.name }]} />
+		<div class="page-head">
+			<div class="eyebrow">{area.type === "lga" ? "Council area" : "Suburb"} · {area.city}</div>
+			<h1>Property professionals in {area.name}, {area.state}</h1>
+			<p class="prose muted">{area.blurb}</p>
+			{lga ? <p class="prose muted">Part of <a href={url("areas", lga.slug)}>{lga.name}</a>.</p> : null}
+		</div>
+		<section class="section">
+			<div class="grid cols-3">
+				{CATEGORIES.map((c, i) => (
+					<a class="card" href={url(c.slug, area.slug)}>
+						<h3>{c.plural}</h3>
+						<p>{c.short}{counts[i] ? ` · ${counts[i]} listed` : ""}</p>
+					</a>
+				))}
+			</div>
+		</section>
+		{nearby.length ? (
+			<section class="section">
+				<h2 style="margin-top:0">Nearby areas</h2>
+				<ul class="chips">{nearby.map((n) => <li><a href={url("areas", n!.slug)}>{n!.name}</a></li>)}</ul>
+			</section>
+		) : null}
+	</div>
+</Layout>

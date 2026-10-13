@@ -47,3 +47,8 @@ Every indexed page needs unique local content; pages failing a minimum-content c
 
 ## Founder to-dos
 Cloudflare + Synergy DNS access, ABN for Stripe, hands-on selling.
+
+## Status (build 1)
+Steps 1-5 of the build order are implemented (see README). Not yet done: Stripe billing (paid plans are arranged
+manually and set in /admin/), real provider data, Census-validated priority list, Search Console submission,
+legal review of privacy/terms drafts. Go-live steps are in docs/SETUP.md.

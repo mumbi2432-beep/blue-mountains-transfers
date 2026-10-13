@@ -1,50 +1,108 @@
 ---
-import BaseHead from '../components/BaseHead.astro';
-import Header from '../components/Header.astro';
-import Footer from '../components/Footer.astro';
-import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
----
+import Layout from "../layouts/Layout.astro";
+import Faq from "../components/Faq.astro";
+import { CATEGORIES } from "../data/categories";
+import { launchedAreas } from "../data/areas";
+import { url } from "../lib/site";
+import { faqLd } from "../lib/seo";
 
-<!doctype html>
-<html lang="en">
-	<head>
-		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
-	</head>
-	<body>
-		<Header />
-		<main>
-			<h1>🧑‍🚀 Hello, Astronaut!</h1>
-			<p>
-				Welcome to the official <a href="https://astro.build/">Astro</a> blog starter template. This
-				template serves as a lightweight, minimally-styled starting point for anyone looking to build
-				a personal website, blog, or portfolio with Astro.
-			</p>
-			<p>
-				This template comes with a few integrations already configured in your
-				<code>astro.config.mjs</code> file. You can customize your setup with
-				<a href="https://astro.build/integrations">Astro Integrations</a> to add tools like Tailwind,
-				React, or Vue to your project.
-			</p>
-			<p>Here are a few ideas on how to get started with the template:</p>
-			<ul>
-				<li>Edit this page in <code>src/pages/index.astro</code></li>
-				<li>Edit the site header items in <code>src/components/Header.astro</code></li>
-				<li>Add your name to the footer in <code>src/components/Footer.astro</code></li>
-				<li>Check out the included blog posts in <code>src/content/blog/</code></li>
-				<li>Customize the blog post page layout in <code>src/layouts/BlogPost.astro</code></li>
-			</ul>
-			<p>
-				Have fun! If you get stuck, remember to <a href="https://docs.astro.build/"
-					>read the docs
-				</a> or <a href="https://astro.build/chat">join us on Discord</a> to ask questions.
-			</p>
-			<p>
-				Looking for a blog template with a bit more personality? Check out <a
-					href="https://github.com/Charca/astro-blog-template"
-					>astro-blog-template
-				</a> by <a href="https://twitter.com/Charca">Maxi Ferreira</a>.
-			</p>
-		</main>
-		<Footer />
-	</body>
-</html>
+const areas = launchedAreas();
+const cities = [...new Set(areas.map((a) => a.city))];
+const faqs = [
+	{ q: "What is Nepali Property Market?", a: "An independent directory that helps Nepali people in Australia find agents, mortgage brokers, conveyancers, accountants and inspectors who understand the community and can help in Nepali." },
+	{ q: "Is it free to use?", a: "Yes. Browsing and sending enquiries to listed professionals is free for home buyers, sellers and renters." },
+	{ q: "How do I know a professional is licensed?", a: "We show a “Licence checked” badge only when we have verified a licence. You should always confirm a licence on the official state or national register before you sign anything." },
+	{ q: "What does “Sponsored” mean?", a: "Businesses can pay for a featured position. Paid placements are clearly labelled “Sponsored” and appear above unpaid listings." },
+	{ q: "I’m a professional. How do I get listed?", a: "Use the “List your business” page. A basic listing is free; paid plans add top placement, enquiry notifications and reporting." },
+];
+---
+<Layout
+	title="Nepali-speaking real estate agents, brokers & more in Australia"
+	description="Find Nepali-speaking real estate agents, mortgage brokers, conveyancers, accountants and inspectors near you. Free enquiries, clearly labelled sponsored listings."
+	rawTitle={false}
+	jsonLd={[faqLd(faqs)]}
+>
+	<section class="hero">
+		<div class="wrap">
+			<div class="eyebrow">Property help in your language</div>
+			<h1>Find Nepali-speaking property professionals near you</h1>
+			<p>Real estate agents, mortgage brokers, conveyancers, accountants and inspectors who understand the Nepali community in Australia.</p>
+			<form class="f" method="get" action="/find/" style="margin-top:22px;max-width:680px">
+				<div class="row">
+					<label style="color:#fff">I need a…
+						<select name="category" required>
+							{CATEGORIES.map((c) => <option value={c.slug}>{c.name}</option>)}
+						</select>
+					</label>
+					<label style="color:#fff">Near…
+						<select name="area" required>
+							{cities.map((city) => (
+								<optgroup label={city}>
+									{areas.filter((a) => a.city === city).sort((a, b) => a.name.localeCompare(b.name)).map((a) => <option value={a.slug}>{a.name}{a.type === "lga" ? " (council area)" : ""}</option>)}
+								</optgroup>
+							))}
+						</select>
+					</label>
+				</div>
+				<div><button class="btn primary" type="submit">Find professionals</button></div>
+			</form>
+		</div>
+	</section>
+
+	<section class="section">
+		<div class="wrap">
+			<h2 style="margin-top:0">Who are you looking for?</h2>
+			<div class="grid cols-3">
+				{CATEGORIES.map((c) => (
+					<a class="card" href={url(c.slug)}>
+						<h3>{c.plural}</h3>
+						<p>{c.short}</p>
+					</a>
+				))}
+			</div>
+		</div>
+	</section>
+
+	<section class="section">
+		<div class="wrap">
+			<h2 style="margin-top:0">Browse by area</h2>
+			{cities.map((city) => (
+				<div style="margin-bottom:18px">
+					<h3>{city}</h3>
+					<ul class="chips">
+						{areas.filter((a) => a.city === city).sort((a, b) => a.name.localeCompare(b.name)).map((a) => <li><a href={url("areas", a.slug)}>{a.name}{a.type === "lga" ? " (council area)" : ""}</a></li>)}
+					</ul>
+				</div>
+			))}
+			<p class="muted">More areas are added as the community directory grows.</p>
+		</div>
+	</section>
+
+	<section class="section">
+		<div class="wrap">
+			<h2 style="margin-top:0">How it works</h2>
+			<div class="grid cols-3">
+				<div class="card"><h3>1. Choose your area</h3><p>Pick the service you need and the suburb or council area you are looking at.</p></div>
+				<div class="card"><h3>2. Compare professionals</h3><p>See who speaks Nepali, who is licence-checked and who is a paid, clearly labelled sponsor.</p></div>
+				<div class="card"><h3>3. Contact directly</h3><p>Call, WhatsApp or send an enquiry. It is free and there is no obligation.</p></div>
+			</div>
+		</div>
+	</section>
+
+	<section class="section">
+		<div class="wrap narrow">
+			<div class="card" style="text-align:center">
+				<h2 style="margin-top:0">Are you an agent, broker or advisor?</h2>
+				<p>Put your business in front of Nepali buyers, sellers and investors searching in your suburb. Free basic listing; paid plans for top placement.</p>
+				<a class="btn primary" href="/list-your-business/">List your business</a>
+			</div>
+		</div>
+	</section>
+
+	<section class="section">
+		<div class="wrap narrow">
+			<h2 style="margin-top:0">Common questions</h2>
+			<Faq items={faqs} />
+		</div>
+	</section>
+</Layout>

@@ -1,0 +1,11 @@
+---
+import Layout from "../layouts/Layout.astro";
+Astro.response.status = 404;
+---
+<Layout title="Page not found" description="This page does not exist." noindex={true}>
+	<div class="wrap narrow section" style="padding-top:56px">
+		<h1>We could not find that page</h1>
+		<p>It may have moved, or we may not cover that area yet. Try the home page to search again.</p>
+		<a class="btn primary" href="/">Back to home</a>
+	</div>
+</Layout>

@@ -1,0 +1,102 @@
+---
+import "../styles/global.css";
+import { CATEGORIES } from "../data/categories";
+import { launchedAreas } from "../data/areas";
+import { SITE_NAME, SITE_TAGLINE, absolute, pageTitle, url } from "../lib/site";
+import { SITE_JSON_LD } from "../lib/seo";
+
+interface Props {
+	title: string;
+	description: string;
+	path?: string; // canonical path; defaults to current
+	noindex?: boolean;
+	jsonLd?: object[];
+	rawTitle?: boolean;
+}
+const { title, description, path, noindex = false, jsonLd = [], rawTitle = false } = Astro.props;
+const base = Astro.site ?? new URL("https://nepalipropertymarket.com.au");
+const canonical = new URL(path ?? Astro.url.pathname, base).toString();
+const fullTitle = rawTitle ? title : pageTitle(title);
+const sydney = launchedAreas().filter((a) => a.type === "suburb").slice(0, 8);
+const year = new Date().getFullYear();
+---
+
+<!doctype html>
+<html lang="en-AU">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>{fullTitle}</title>
+		<meta name="description" content={description} />
+		<link rel="canonical" href={canonical} />
+		<meta name="robots" content={noindex ? "noindex,follow" : "index,follow,max-image-preview:large"} />
+		<meta name="theme-color" content="#0b2a5b" />
+		<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content={SITE_NAME} />
+		<meta property="og:title" content={fullTitle} />
+		<meta property="og:description" content={description} />
+		<meta property="og:url" content={canonical} />
+		<meta property="og:locale" content="en_AU" />
+		<meta name="twitter:card" content="summary" />
+		{[SITE_JSON_LD, ...jsonLd].map((j) => <script type="application/ld+json" set:html={JSON.stringify(j)} />)}
+	</head>
+	<body>
+		<a class="skip" href="#main">Skip to content</a>
+		<header class="site-header">
+			<div class="wrap">
+				<a class="brand" href="/"><img src="/favicon.svg" alt="" width="34" height="34" /><span>Nepali <b>Property</b> Market</span></a>
+				<nav class="nav" aria-label="Main">
+					<a href="/nepalese-real-estate-agents/">Agents</a>
+					<a href="/nepalese-mortgage-brokers/">Brokers</a>
+					<a href="/about/">About</a>
+					<a class="cta" href="/list-your-business/">List your business</a>
+				</nav>
+			</div>
+		</header>
+		<main id="main"><slot /></main>
+		<footer class="site-footer">
+			<div class="wrap">
+				<div class="cols">
+					<div>
+						<h4>{SITE_NAME}</h4>
+						<p class="muted">{SITE_TAGLINE}. Find agents, brokers, conveyancers, accountants and inspectors who understand the community.</p>
+					</div>
+					<div>
+						<h4>Find a professional</h4>
+						<ul>{CATEGORIES.map((c) => <li><a href={url(c.slug)}>{c.plural}</a></li>)}</ul>
+					</div>
+					<div>
+						<h4>Popular areas</h4>
+						<ul>{sydney.map((a) => <li><a href={url("areas", a.slug)}>{a.name}, {a.state}</a></li>)}</ul>
+					</div>
+					<div>
+						<h4>For businesses</h4>
+						<ul>
+							<li><a href="/list-your-business/">List your business</a></li>
+							<li><a href="/about/">About us</a></li>
+							<li><a href="/privacy/">Privacy policy</a></li>
+							<li><a href="/terms/">Terms of use</a></li>
+						</ul>
+					</div>
+				</div>
+				<p class="legal">
+					&copy; {year} {SITE_NAME}. We are an independent directory and are not a real estate agency, credit provider or law firm.
+					Listings marked “Sponsored” are paid placements. Always verify a professional’s licence before you engage them.
+				</p>
+			</div>
+		</footer>
+		<script is:inline>
+			// Lightweight click tracking for call / WhatsApp / website buttons (feeds provider reports).
+			document.addEventListener("click", function (e) {
+				var el = e.target && e.target.closest ? e.target.closest("[data-track]") : null;
+				if (!el || !navigator.sendBeacon) return;
+				var fd = new FormData();
+				fd.append("provider", el.getAttribute("data-provider") || "");
+				fd.append("kind", el.getAttribute("data-track") || "");
+				fd.append("area", el.getAttribute("data-area") || "");
+				navigator.sendBeacon("/api/click/", fd);
+			});
+		</script>
+	</body>
+</html>

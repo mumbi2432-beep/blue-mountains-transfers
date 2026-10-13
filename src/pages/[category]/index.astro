@@ -1,0 +1,68 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Breadcrumbs from "../../components/Breadcrumbs.astro";
+import Faq from "../../components/Faq.astro";
+import { categoryBySlug } from "../../data/categories";
+import { launchedAreas } from "../../data/areas";
+import { countsByCategoryArea } from "../../lib/db";
+import { getEnv } from "../../lib/env";
+import { breadcrumbLd, faqLd } from "../../lib/seo";
+import { url } from "../../lib/site";
+
+const cat = categoryBySlug(Astro.params.category ?? "");
+if (!cat) return Astro.rewrite("/404");
+
+const counts = await countsByCategoryArea(getEnv(Astro.locals).DB);
+const areas = launchedAreas();
+const cities = [...new Set(areas.map((a) => a.city))];
+const faqs = cat.faqs("Australia");
+const crumbs = [{ name: "Home", path: "/" }, { name: cat.plural }];
+---
+<Layout
+	title={`Nepali-speaking ${cat.plural} in Australia`}
+	description={`Find Nepali-speaking ${cat.plural.toLowerCase()} by suburb and council area. ${cat.short}. Free enquiries, clearly labelled sponsored listings.`}
+	jsonLd={[breadcrumbLd([{ name: "Home", path: "/" }, { name: cat.plural, path: url(cat.slug) }]), faqLd(faqs)]}
+>
+	<div class="wrap">
+		<Breadcrumbs items={crumbs} />
+		<div class="page-head">
+			<div class="eyebrow">{cat.short}</div>
+			<h1>Nepali-speaking {cat.plural.toLowerCase()} in Australia</h1>
+			<p class="muted prose">{cat.why}</p>
+		</div>
+
+		<section class="section">
+			<h2 style="margin-top:0">Choose your area</h2>
+			{cities.map((city) => (
+				<div style="margin-bottom:20px">
+					<h3>{city}</h3>
+					<ul class="chips">
+						{areas.filter((a) => a.city === city).sort((a, b) => a.name.localeCompare(b.name)).map((a) => {
+							const n = counts[`${cat.slug}|${a.slug}`] ?? 0;
+							return <li><a href={url(cat.slug, a.slug)}>{a.name}{a.type === "lga" ? " (council)" : ""}{n ? ` · ${n}` : ""}</a></li>;
+						})}
+					</ul>
+				</div>
+			))}
+		</section>
+
+		<section class="section prose">
+			<h2 style="margin-top:0">What to check before you choose</h2>
+			<ul>{cat.checklist.map((c) => <li>{c}</li>)}</ul>
+			<p class="notice">You can verify credentials using {cat.registerName}: <a href={cat.registerUrl} rel="nofollow noopener" target="_blank">official register</a>.</p>
+		</section>
+
+		<section class="section narrow">
+			<h2 style="margin-top:0">Common questions</h2>
+			<Faq items={faqs} />
+		</section>
+
+		<section class="section">
+			<div class="card" style="text-align:center">
+				<h2 style="margin-top:0">Are you a {cat.name.toLowerCase()}?</h2>
+				<p>Get in front of Nepali clients searching in your suburb.</p>
+				<a class="btn primary" href="/list-your-business/">List your business</a>
+			</div>
+		</section>
+	</div>
+</Layout>

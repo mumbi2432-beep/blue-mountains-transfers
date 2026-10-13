@@ -1,0 +1,112 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Breadcrumbs from "../../components/Breadcrumbs.astro";
+import Faq from "../../components/Faq.astro";
+import ProviderCard from "../../components/ProviderCard.astro";
+import { CATEGORIES, categoryBySlug } from "../../data/categories";
+import { areaBySlug, STATE_NAMES } from "../../data/areas";
+import { providersForArea, realProviderCount } from "../../lib/db";
+import { getEnv } from "../../lib/env";
+import { areaDescription, areaTitle, breadcrumbLd, faqLd, itemListLd } from "../../lib/seo";
+import { url } from "../../lib/site";
+
+const cat = categoryBySlug(Astro.params.category ?? "");
+const area = areaBySlug(Astro.params.area ?? "");
+if (!cat || !area || !area.launch) return Astro.rewrite("/404");
+
+const db = getEnv(Astro.locals).DB;
+const providers = await providersForArea(db, cat.slug, area);
+const realCount = await realProviderCount(db, cat.slug, area);
+// Quality rule: pages are only indexed once they list at least one real provider.
+const indexable = realCount > 0;
+
+const lga = area.lga ? areaBySlug(area.lga) : undefined;
+const nearby = area.nearby.map((s) => areaBySlug(s)).filter((a) => a && a.launch);
+const otherCats = CATEGORIES.filter((c) => c.slug !== cat.slug);
+const faqs = [
+	...cat.faqs(area.name),
+	{
+		q: `What is the difference between Sponsored and regular listings in ${area.name}?`,
+		a: `Sponsored listings are paid placements and appear first. Other listings are ordered by whether they speak Nepali and have a verified licence. We label every paid placement.`,
+	},
+];
+const crumbs = [
+	{ name: "Home", path: "/" },
+	{ name: cat.plural, path: url(cat.slug) },
+	{ name: area.name },
+];
+const ldCrumbs = breadcrumbLd([
+	{ name: "Home", path: "/" },
+	{ name: cat.plural, path: url(cat.slug) },
+	{ name: area.name, path: url(cat.slug, area.slug) },
+]);
+const ld: object[] = [ldCrumbs, faqLd(faqs)];
+if (providers.length) ld.push(itemListLd(providers.map((p) => ({ name: p.business_name || p.name, path: `/provider/${p.slug}/` }))));
+---
+<Layout
+	title={areaTitle(cat, area)}
+	description={areaDescription(cat, area, providers.length)}
+	noindex={!indexable}
+	jsonLd={ld}
+>
+	<div class="wrap">
+		<Breadcrumbs items={crumbs} />
+		<div class="page-head">
+			<div class="eyebrow">{area.name}, {area.state}</div>
+			<h1>Nepali-speaking {cat.plural.toLowerCase()} in {area.name}</h1>
+			<p class="prose muted">{cat.intro(area.name)}</p>
+		</div>
+
+		<div class="two-col">
+			<div>
+				{providers.length ? (
+					<>
+						<p class="notice">Listings marked “Sponsored” are paid placements. “Nepali-speaking” and “Licence checked” badges are shown only when we have confirmed them.</p>
+						{providers.map((p) => <ProviderCard p={p} area={area.slug} />)}
+					</>
+				) : (
+					<div class="empty">
+						<h3>No {cat.plural.toLowerCase()} listed in {area.name} yet</h3>
+						<p class="muted">We are adding Nepali-speaking professionals area by area. If you work in {area.name}, you can list your business for free.</p>
+						<a class="btn primary" href="/list-your-business/">List your business</a>
+					</div>
+				)}
+
+				<section class="prose">
+					<h2>About {area.name}</h2>
+					<p>{area.blurb}</p>
+					{lga ? <p>{area.name} sits within <a href={url(cat.slug, lga.slug)}>{lga.name}</a>. {cat.plural} who serve the wider council area are included on this page.</p> : null}
+					{nearby.length ? (
+						<p>Also see nearby: {nearby.map((n, i) => <><a href={url(cat.slug, n!.slug)}>{n!.name}</a>{i < nearby.length - 1 ? ", " : ""}</>)}.</p>
+					) : null}
+
+					<h2>Why choose a Nepali-speaking {cat.name.toLowerCase()}?</h2>
+					<p>{cat.why}</p>
+
+					<h2>What to check before you choose</h2>
+					<ul>{cat.checklist.map((c) => <li>{c}</li>)}</ul>
+					<p class="notice">Verify credentials using {cat.registerName}: <a href={cat.registerUrl} rel="nofollow noopener" target="_blank">official register</a>. We are an independent directory and do not give financial, legal or tax advice.</p>
+				</section>
+
+				<section>
+					<h2>Common questions</h2>
+					<Faq items={faqs} />
+				</section>
+			</div>
+
+			<aside class="sticky">
+				<div class="card">
+					<h3>More help in {area.name}</h3>
+					<ul class="chips">
+						{otherCats.map((c) => <li><a href={url(c.slug, area.slug)}>{c.plural}</a></li>)}
+					</ul>
+				</div>
+				<div class="card" style="margin-top:16px">
+					<h3>Are you a {cat.name.toLowerCase()}?</h3>
+					<p>Be seen by Nepali clients searching in {area.name}.</p>
+					<a class="btn primary small" style="margin-top:12px" href="/list-your-business/">List your business</a>
+				</div>
+			</aside>
+		</div>
+	</div>
+</Layout>

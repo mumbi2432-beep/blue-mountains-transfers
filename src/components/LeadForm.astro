@@ -1,0 +1,20 @@
+---
+interface Props { providerSlug: string; providerName: string; area?: string }
+const { providerSlug, providerName, area = "" } = Astro.props;
+---
+<form class="f" method="post" action="/api/lead/" id="enquire">
+	<h3 style="margin:0">Send an enquiry to {providerName}</h3>
+	{Astro.url.searchParams.get("error") ? <div class="alert err">Please add your name, a valid mobile or email, and tick the consent box.</div> : null}
+	<input type="hidden" name="provider" value={providerSlug} />
+	<input type="hidden" name="area" value={area} />
+	<div class="hp" aria-hidden="true"><label>Leave blank <input type="text" name="website_url" tabindex="-1" autocomplete="off" /></label></div>
+	<label>Your name <input name="name" required maxlength="100" autocomplete="name" /></label>
+	<div class="row">
+		<label>Mobile <input name="phone" type="tel" maxlength="30" autocomplete="tel" inputmode="tel" /></label>
+		<label>Email <input name="email" type="email" maxlength="120" autocomplete="email" /></label>
+	</div>
+	<label>How can they help? <textarea name="message" rows="4" maxlength="1500" placeholder="e.g. I'm a first-home buyer looking at units around this area. Budget about…"></textarea></label>
+	<label class="check"><input type="checkbox" name="consent" value="1" required /> <span>I agree to my details being sent to this business so they can contact me. See the <a href="/privacy/">privacy policy</a>.</span></label>
+	<button class="btn primary" type="submit">Send enquiry</button>
+	<p class="muted" style="font-size:.85rem;margin:0">Please give a mobile or an email so they can reply. Free to use; no obligation.</p>
+</form>

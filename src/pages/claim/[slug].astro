@@ -1,0 +1,21 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import ClaimForm from "../../components/ClaimForm.astro";
+import { providerBySlug } from "../../lib/db";
+import { getEnv } from "../../lib/env";
+
+const p = await providerBySlug(getEnv(Astro.locals).DB, Astro.params.slug ?? "");
+if (!p) return Astro.rewrite("/404");
+const error = Astro.url.searchParams.get("error");
+const display = p.business_name || p.name;
+---
+<Layout title={`Claim ${display}`} description={`Claim the ${display} profile on Nepali Property Market.`} noindex={true}>
+	<div class="wrap narrow">
+		<div class="page-head">
+			<h1>Claim “{display}”</h1>
+			<p class="muted">Tell us who you are and we will verify you before giving you control of this profile.</p>
+		</div>
+		{error ? <div class="alert err">Please check your details and try again.</div> : null}
+		<div class="card"><ClaimForm providerSlug={p.slug} businessName={display} category={p.category} /></div>
+	</div>
+</Layout>

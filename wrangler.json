@@ -1,5 +1,5 @@
 {
-	"name": "blue-mountains-transfers",
+	"name": "nepali-property-market",
 	"compatibility_date": "2025-10-08",
 	"compatibility_flags": ["nodejs_compat"],
 	"main": "./dist/_worker.js/index.js",
@@ -7,8 +7,19 @@
 		"directory": "./dist",
 		"binding": "ASSETS"
 	},
-	"observability": {
-		"enabled": true
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "nepali-property-market",
+			"database_id": "REPLACE_WITH_D1_DATABASE_ID",
+			"migrations_dir": "db/migrations"
+		}
+	],
+	"vars": {
+		"SITE_URL": "https://nepalipropertymarket.com.au",
+		"MAIL_FROM": "Nepali Property Market <leads@nepalipropertymarket.com.au>",
+		"ADMIN_NOTIFY_EMAIL": "REPLACE_WITH_YOUR_EMAIL"
 	},
+	"observability": { "enabled": true },
 	"upload_source_maps": true
 }

@@ -1,0 +1,58 @@
+---
+import Layout from "../layouts/Layout.astro";
+import ClaimForm from "../components/ClaimForm.astro";
+const error = Astro.url.searchParams.get("error");
+---
+<Layout
+	title="List your business - reach Nepali clients in your suburb"
+	description="Get your agency, brokerage or practice in front of Nepali buyers, sellers and investors. Free basic listing, with paid top placement per suburb."
+>
+	<div class="wrap">
+		<div class="page-head">
+			<div class="eyebrow">For agents, brokers and advisors</div>
+			<h1>Be the first name Nepali clients see in your suburb</h1>
+			<p class="prose muted">Nepali buyers, sellers and investors search for someone who speaks their language and understands their situation. Nobody owns those searches yet. List your business and get found.</p>
+		</div>
+
+		<section class="section">
+			<div class="pricing">
+				<div class="card price-card">
+					<h3>Free listing</h3>
+					<div class="price">$0</div>
+					<ul class="prose"><li>Basic profile in your areas</li><li>Call and WhatsApp buttons</li><li>Claim and edit your details</li></ul>
+				</div>
+				<div class="card price-card featured">
+					<h3>Founding member</h3>
+					<div class="price">$99<small> /month + GST</small></div>
+					<ul class="prose"><li>Limited to the first 20 businesses</li><li>Price locked in while you stay</li><li>Sponsored placement above free listings</li><li>Instant enquiry emails and a monthly results report</li></ul>
+				</div>
+				<div class="card price-card">
+					<h3>Top spot</h3>
+					<div class="price">from $149<small> /month + GST</small></div>
+					<ul class="prose"><li>The single top position for your category in your area</li><li>Only one business per area and category</li><li>Everything in the founding plan</li></ul>
+				</div>
+			</div>
+			<p class="notice">Online payment is not switched on yet. Paid plans are arranged with us directly after your request is approved. Paid placements are always labelled “Sponsored” on the site.</p>
+		</section>
+
+		<section class="section">
+			<div class="two-col">
+				<div class="prose">
+					<h2 style="margin-top:0">What you get</h2>
+					<ul>
+						<li><b>Enquiries by email</b> the moment someone contacts you through your profile.</li>
+						<li><b>Click tracking</b> for calls, WhatsApp and website visits, so you can see what the listing delivers.</li>
+						<li><b>A “Nepali-speaking” badge</b> once we have confirmed it.</li>
+						<li><b>A “Licence checked” badge</b> once we have verified your licence.</li>
+					</ul>
+					<p class="notice">We never pass your details to third parties for marketing.</p>
+				</div>
+				<div class="card">
+					<h3>Apply to be listed</h3>
+					{error ? <div class="alert err">Please check your details and try again.</div> : null}
+					<ClaimForm />
+				</div>
+			</div>
+		</section>
+	</div>
+</Layout>

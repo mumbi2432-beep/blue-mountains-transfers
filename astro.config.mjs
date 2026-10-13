@@ -1,17 +1,14 @@
 // @ts-check
 import { defineConfig } from "astro/config";
-import mdx from "@astrojs/mdx";
-import sitemap from "@astrojs/sitemap";
-
 import cloudflare from "@astrojs/cloudflare";
 
 // https://astro.build/config
 export default defineConfig({
-	site: "https://example.com",
-	integrations: [mdx(), sitemap()],
+	site: "https://nepalipropertymarket.com.au",
+	output: "server",
+	trailingSlash: "always",
+	build: { format: "directory" },
 	adapter: cloudflare({
-		platformProxy: {
-			enabled: true,
-		},
+		platformProxy: { enabled: true },
 	}),
 });
